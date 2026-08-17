@@ -79,17 +79,6 @@ de boné, cartola e coroa.
   funcionando normalmente, só não guarda o progresso.
 - **Áudio procedural** via Web Audio API — nenhum arquivo de som é carregado.
 
-## Estrutura do projeto
-
-```
-.
-├── index.html   # o jogo inteiro: HTML, CSS e JavaScript
-└── README.md    # este arquivo
-```
-
-Tudo vive em `index.html` de propósito: assim o jogo pode ser aberto com dois cliques,
-enviado por e-mail ou hospedado em qualquer lugar sem etapa de build.
-
 ### Organização do código
 
 O JavaScript fica dentro de uma IIFE e está dividido em blocos comentados:
@@ -114,24 +103,5 @@ correspondente em `desenhaAcessorio`.
 O corpo da cobra não é uma lista de peças independentes: a cabeça grava o caminho
 percorrido (um ponto a cada 4 px) e cada segmento é apenas uma posição ao longo desse
 rastro. É isso que dá o movimento fluido e faz o corpo crescer sem recalcular nada.
-
-## Publicar no GitHub Pages
-
-Como é um site estático de um arquivo só, dá para publicar direto:
-
-1. Abra **Settings → Pages** no repositório.
-2. Em *Source*, escolha **Deploy from a branch**.
-3. Selecione a branch `main` e a pasta `/ (root)`, e salve.
-
-Em alguns minutos o jogo fica disponível em
-`https://iasmim-nunes.github.io/Jogo-da-cobrinha/`.
-
-## Compatibilidade
-
-Funciona em navegadores modernos de desktop e celular (Chrome, Edge, Firefox, Safari).
-No celular o controle é por toque: arraste para guiar a cobra e mantenha o dedo na tela
-para o turbo. O canvas se adapta à resolução da tela (`devicePixelRatio`).
-
-## Licença
 
 Uso livre para fins pessoais e educacionais.

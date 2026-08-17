@@ -262,6 +262,136 @@
 
   .botao.secundario:hover { background: rgba(255, 255, 255, 0.14); }
 
+  .campo-nome {
+    display: block;
+    margin: 0 auto 20px;
+    max-width: 320px;
+    text-align: left;
+  }
+
+  .campo-nome span {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    opacity: 0.65;
+    margin-bottom: 6px;
+    font-weight: 700;
+  }
+
+  .campo-nome input {
+    pointer-events: auto;
+    width: 100%;
+    padding: 13px 16px;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--texto);
+    background: rgba(10, 16, 40, 0.7);
+    border: 1px solid rgba(140, 200, 255, 0.35);
+    border-radius: 14px;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+
+  .campo-nome input:focus {
+    border-color: var(--neon-1);
+    box-shadow: 0 0 0 3px rgba(0, 229, 255, 0.2);
+  }
+
+  .moedas {
+    font-size: 14px;
+    margin: 18px auto 0;
+    opacity: 0.85;
+  }
+
+  .moedas b { color: #ffd75e; }
+
+  .painel-loja {
+    width: min(880px, 100%);
+    max-height: 88vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .painel-loja h2 {
+    margin: 0 0 4px;
+    font-size: clamp(26px, 5vw, 40px);
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    background: linear-gradient(100deg, var(--neon-3), var(--neon-1) 45%, var(--neon-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    line-height: 1.2;
+    padding-bottom: 0.1em;
+  }
+
+  .loja-grade {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+    gap: 12px;
+    overflow-y: auto;
+    padding: 4px;
+    margin: 16px 0 20px;
+  }
+
+  .item {
+    pointer-events: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 10px;
+    text-align: center;
+    border-radius: 16px;
+    background: rgba(10, 16, 40, 0.6);
+    border: 1px solid rgba(140, 200, 255, 0.2);
+    transition: border-color 0.15s, transform 0.15s;
+  }
+
+  .item:hover { transform: translateY(-2px); }
+  .item.equipado { border-color: var(--neon-3); box-shadow: 0 0 22px rgba(124, 255, 79, 0.25); }
+  .item.bloqueado canvas { opacity: 0.7; }
+
+  .item canvas {
+    width: 100%;
+    height: 84px;
+    display: block;
+    border-radius: 10px;
+    background: rgba(4, 6, 20, 0.55);
+  }
+
+  .item strong {
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .item button {
+    pointer-events: auto;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 800;
+    padding: 8px 10px;
+    border-radius: 99px;
+    border: 0;
+    color: #04101c;
+    background: linear-gradient(180deg, #b6ffa1, var(--neon-3) 60%, #4ed12a);
+  }
+
+  .item button[disabled] {
+    cursor: not-allowed;
+    color: rgba(234, 242, 255, 0.6);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(160, 210, 255, 0.2);
+  }
+
+  .item button.usando {
+    color: var(--texto);
+    background: rgba(124, 255, 79, 0.16);
+    border: 1px solid rgba(124, 255, 79, 0.5);
+  }
+
   .resumo {
     display: flex;
     gap: 26px;
@@ -318,8 +448,25 @@
       Use <kbd>mouse</kbd> ou <kbd>W A S D</kbd> / <kbd>setas</kbd> para virar e
       <kbd>espaço</kbd> ou <kbd>clique</kbd> para o turbo (gasta um pouco do corpo).
     </p>
+    <label class="campo-nome">
+      <span>Seu nome no jogo</span>
+      <input id="campo-nome" maxlength="14" placeholder="Ex.: Iasmim" autocomplete="off" spellcheck="false">
+    </label>
     <div class="acoes">
       <button class="botao" id="botao-jogar">Começar</button>
+      <button class="botao secundario" id="botao-loja">Loja de cobrinhas</button>
+    </div>
+    <p class="moedas">🪙 <b id="valor-moedas">0</b> moedas &middot; usando: <b id="visual-atual">Neon Clássica</b></p>
+  </div>
+</div>
+
+<div class="tela oculta" id="tela-loja">
+  <div class="painel-loja">
+    <h2>Loja de cobrinhas</h2>
+    <p class="moedas">🪙 <b id="loja-moedas">0</b> moedas &middot; você ganha 1 moeda a cada esfera comida</p>
+    <div class="loja-grade" id="loja-grade"></div>
+    <div class="acoes">
+      <button class="botao" id="botao-fechar-loja">Voltar</button>
     </div>
   </div>
 </div>
@@ -331,10 +478,12 @@
     <div class="resumo">
       <div><b>Pontos</b><span id="fim-pontos">0</span></div>
       <div><b>Tamanho</b><span id="fim-tamanho">0</span></div>
+      <div><b>Moedas</b><span id="fim-moedas" style="color:#ffd75e">+0</span></div>
       <div><b>Recorde</b><span id="fim-recorde">0</span></div>
     </div>
     <div class="acoes">
       <button class="botao" id="botao-reiniciar">Jogar de novo</button>
+      <button class="botao secundario" id="botao-loja-fim">Loja</button>
       <button class="botao secundario" id="botao-casa">Voltar para casa</button>
     </div>
   </div>
@@ -358,6 +507,24 @@
 
   const NOMES = ['Víbora', 'Naja', 'Coral', 'Jiboia', 'Píton', 'Cascavel', 'Sucuri', 'Salamandra', 'Anaconda']
 
+  // Catálogo da loja. `ac` é a cor do acessório em HSL; `matiz` é a cor do corpo
+  // (ignorada quando `arcoiris` é verdadeiro). Preço em moedas.
+  const VISUAIS = [
+    { id: 'neon', nome: 'Neon Clássica', preco: 0, arcoiris: true, matiz: 150, acessorio: null },
+    { id: 'bone', nome: 'Boné Esportivo', preco: 40, matiz: 205, acessorio: 'bone', ac: { h: 355, s: 85, l: 52 } },
+    { id: 'touca', nome: 'Touca de Inverno', preco: 70, matiz: 168, acessorio: 'touca', ac: { h: 205, s: 80, l: 55 } },
+    { id: 'cachecol', nome: 'Cachecol Listrado', preco: 110, matiz: 28, acessorio: 'cachecol', ac: { h: 348, s: 82, l: 52 } },
+    { id: 'festa', nome: 'Chapéu de Festa', preco: 150, matiz: 315, acessorio: 'festa', ac: { h: 48, s: 95, l: 55 } },
+    { id: 'laco', nome: 'Laço Fofo', preco: 200, matiz: 335, acessorio: 'laco', ac: { h: 330, s: 90, l: 66 } },
+    { id: 'oculos', nome: 'Óculos Escuros', preco: 260, matiz: 95, acessorio: 'oculos', ac: { h: 220, s: 25, l: 16 } },
+    { id: 'cartola', nome: 'Cartola Elegante', preco: 320, matiz: 268, acessorio: 'cartola', ac: { h: 250, s: 22, l: 18 } },
+    { id: 'fone', nome: 'Fone Gamer', preco: 400, matiz: 192, acessorio: 'fone', ac: { h: 280, s: 80, l: 58 } },
+    { id: 'chifres', nome: 'Chifrinhos', preco: 520, matiz: 2, acessorio: 'chifres', ac: { h: 32, s: 70, l: 62 } },
+    { id: 'coroa', nome: 'Coroa Dourada', preco: 700, matiz: 278, saturacao: 88, acessorio: 'coroa', ac: { h: 45, s: 95, l: 58 } }
+  ]
+
+  const visualPorId = (id) => VISUAIS.find(v => v.id === id) || VISUAIS[0]
+
   const el = {
     pontos: document.getElementById('valor-pontos'),
     tamanho: document.getElementById('valor-tamanho'),
@@ -367,8 +534,15 @@
     fimTamanho: document.getElementById('fim-tamanho'),
     fimRecorde: document.getElementById('fim-recorde'),
     fimMotivo: document.getElementById('fim-motivo'),
+    fimMoedas: document.getElementById('fim-moedas'),
     telaInicio: document.getElementById('tela-inicio'),
     telaFim: document.getElementById('tela-fim'),
+    telaLoja: document.getElementById('tela-loja'),
+    grade: document.getElementById('loja-grade'),
+    campoNome: document.getElementById('campo-nome'),
+    moedas: document.getElementById('valor-moedas'),
+    lojaMoedas: document.getElementById('loja-moedas'),
+    visualAtual: document.getElementById('visual-atual'),
     barraTurbo: document.getElementById('barra-turbo'),
     preencheTurbo: document.getElementById('preenche-turbo')
   }
@@ -398,11 +572,33 @@
   }
 
   // localStorage não existe em todo contexto (ex.: página aberta via data:)
-  function leRecorde () {
-    try { return Number(localStorage.getItem('cobrinha3d-recorde') || 0) } catch (e) { return 0 }
+  function leArmazenado (chave, padrao) {
+    try {
+      const valor = localStorage.getItem('cobrinha3d-' + chave)
+      return valor === null ? padrao : valor
+    } catch (e) { return padrao }
   }
-  function gravaRecorde (valor) {
-    try { localStorage.setItem('cobrinha3d-recorde', String(valor)) } catch (e) { /* segue sem salvar */ }
+  function gravaArmazenado (chave, valor) {
+    try { localStorage.setItem('cobrinha3d-' + chave, String(valor)) } catch (e) { /* segue sem salvar */ }
+  }
+
+  // perfil do jogador: nome, moedas e visuais comprados
+  const perfil = {
+    nome: leArmazenado('nome', ''),
+    moedas: Number(leArmazenado('moedas', '0')) || 0,
+    comprados: (() => {
+      try { return JSON.parse(leArmazenado('comprados', '["neon"]')) } catch (e) { return ['neon'] }
+    })(),
+    visual: leArmazenado('visual', 'neon')
+  }
+  if (!Array.isArray(perfil.comprados) || !perfil.comprados.includes('neon')) perfil.comprados = ['neon']
+  if (!perfil.comprados.includes(perfil.visual)) perfil.visual = 'neon'
+
+  function salvaPerfil () {
+    gravaArmazenado('nome', perfil.nome)
+    gravaArmazenado('moedas', perfil.moedas)
+    gravaArmazenado('comprados', JSON.stringify(perfil.comprados))
+    gravaArmazenado('visual', perfil.visual)
   }
 
   // ------------------------------------------------------------------- estado
@@ -410,7 +606,7 @@
     rodando: false,
     tempo: 0,
     pontos: 0,
-    recorde: leRecorde(),
+    recorde: Number(leArmazenado('recorde', '0')) || 0,
     tremor: 0
   }
 
@@ -479,6 +675,7 @@
 
   // ------------------------------------------------------------------- cobras
   function criaCobra (config) {
+    const visual = config.visual || VISUAIS[0]
     const c = {
       x: config.x,
       y: config.y,
@@ -487,7 +684,8 @@
       raio: 13,
       segmentos: SEGMENTOS_INICIAIS,
       trilha: [],
-      matiz: config.matiz,
+      visual,
+      matiz: visual.arcoiris ? config.matiz : visual.matiz,
       ia: !!config.ia,
       nome: config.nome,
       pontos: 0,
@@ -548,6 +746,7 @@
       y: pos.y,
       angulo: aleatorio(-Math.PI, Math.PI),
       matiz: aleatorio(0, 360),
+      visual: escolhe(VISUAIS),
       ia: true,
       nome: escolhe(NOMES) + ' ' + Math.floor(aleatorio(1, 99))
     })
@@ -606,7 +805,7 @@
         c.segmentos += f.valor
         c.pontos += f.valor * 10
         atualizaRaio(c)
-        c.matiz = (c.matiz + 2) % 360
+        if (c.visual.arcoiris) c.matiz = (c.matiz + 2) % 360
         explodir(f.x, f.y, f.matiz, c === jogador ? 12 : 5, 220)
         if (c === jogador) {
           jogo.pontos = c.pontos
@@ -720,8 +919,12 @@
   function comecar () {
     el.telaInicio.classList.add('oculta')
     el.telaFim.classList.add('oculta')
+    el.telaLoja.classList.add('oculta')
     entrada.mouseX = larguraTela / 2
     entrada.mouseY = alturaTela / 2
+
+    perfil.nome = el.campoNome.value.trim().slice(0, 14)
+    salvaPerfil()
 
     preparaMundo()
     const pos = nascePosicaoLivre()
@@ -730,8 +933,9 @@
       y: pos.y,
       angulo: aleatorio(-Math.PI, Math.PI),
       matiz: aleatorio(0, 360),
+      visual: visualPorId(perfil.visual),
       ia: false,
-      nome: 'Você'
+      nome: perfil.nome || 'Você'
     })
     cobras.push(jogador)
     camera.x = jogador.x
@@ -745,11 +949,13 @@
 
   function voltarParaCasa () {
     el.telaFim.classList.add('oculta')
+    el.telaLoja.classList.add('oculta')
     el.telaInicio.classList.remove('oculta')
     jogo.rodando = false
     jogador = null
     preparaMundo()
     atualizaHud()
+    atualizaPerfilNaTela()
   }
 
   function encerrar (motivo) {
@@ -763,8 +969,15 @@
 
     if (jogo.pontos > jogo.recorde) {
       jogo.recorde = jogo.pontos
-      gravaRecorde(jogo.recorde)
+      gravaArmazenado('recorde', jogo.recorde)
     }
+
+    const ganhas = Math.floor(jogo.pontos / 10)   // 1 moeda por esfera comida
+    perfil.moedas += ganhas
+    salvaPerfil()
+    atualizaPerfilNaTela()
+
+    el.fimMoedas.textContent = '+' + ganhas
     el.fimMotivo.textContent = motivo
     el.fimPontos.textContent = jogo.pontos
     el.fimTamanho.textContent = jogador.segmentos
@@ -793,6 +1006,107 @@
     )).join('')
   }
 
+  // ------------------------------------------------------------------- loja
+  let origemLoja = 'inicio'
+
+  function atualizaPerfilNaTela () {
+    el.moedas.textContent = perfil.moedas
+    el.lojaMoedas.textContent = perfil.moedas
+    el.visualAtual.textContent = visualPorId(perfil.visual).nome
+  }
+
+  // miniatura de cada cobrinha, desenhada com o mesmo código do jogo
+  function desenhaPrevia (tela, visual) {
+    const g = tela.getContext('2d')
+    g.clearRect(0, 0, tela.width, tela.height)
+
+    const raio = 13
+    const pts = []
+    for (let i = 0; i <= 16; i++) {
+      pts.push({
+        x: tela.width * 0.74 - i * raio * 0.62,
+        y: tela.height * 0.56 + Math.sin(i * 0.5) * raio * 0.45
+      })
+    }
+    const falso = {
+      x: pts[0].x,
+      y: pts[0].y,
+      angulo: Math.atan2(pts[0].y - pts[1].y, pts[0].x - pts[1].x),
+      raio,
+      visual,
+      matiz: visual.arcoiris ? 150 : visual.matiz,
+      turbo: false,
+      segmentos: 16
+    }
+    desenhaCorpoCompleto(g, falso, pts, true)
+  }
+
+  function montaLoja () {
+    el.grade.innerHTML = ''
+    for (const visual of VISUAIS) {
+      const comprado = perfil.comprados.includes(visual.id)
+      const usando = perfil.visual === visual.id
+
+      const cartao = document.createElement('div')
+      cartao.className = 'item' + (usando ? ' equipado' : '') + (comprado ? '' : ' bloqueado')
+
+      const tela = document.createElement('canvas')
+      tela.width = 200
+      tela.height = 100
+
+      const titulo = document.createElement('strong')
+      titulo.textContent = visual.nome
+
+      const botao = document.createElement('button')
+      if (usando) {
+        botao.textContent = 'Em uso'
+        botao.className = 'usando'
+        botao.disabled = true
+      } else if (comprado) {
+        botao.textContent = 'Usar'
+      } else if (perfil.moedas >= visual.preco) {
+        botao.textContent = 'Comprar 🪙 ' + visual.preco
+      } else {
+        botao.textContent = '🔒 ' + visual.preco + ' moedas'
+        botao.disabled = true
+      }
+
+      botao.addEventListener('click', () => {
+        if (comprado) {
+          perfil.visual = visual.id
+          bipe(520, 0.08, 0.05)
+        } else if (perfil.moedas >= visual.preco) {
+          perfil.moedas -= visual.preco
+          perfil.comprados.push(visual.id)
+          perfil.visual = visual.id
+          bipe(700, 0.16, 0.06)
+        }
+        salvaPerfil()
+        atualizaPerfilNaTela()
+        montaLoja()
+      })
+
+      cartao.append(tela, titulo, botao)
+      el.grade.appendChild(cartao)
+      desenhaPrevia(tela, visual)
+    }
+  }
+
+  function abreLoja (origem) {
+    origemLoja = origem
+    el.telaInicio.classList.add('oculta')
+    el.telaFim.classList.add('oculta')
+    el.telaLoja.classList.remove('oculta')
+    atualizaPerfilNaTela()
+    montaLoja()
+  }
+
+  function fechaLoja () {
+    el.telaLoja.classList.add('oculta')
+    if (origemLoja === 'fim') el.telaFim.classList.remove('oculta')
+    else el.telaInicio.classList.remove('oculta')
+  }
+
   // ------------------------------------------------------------------- entrada
   canvas.addEventListener('pointermove', (ev) => {
     entrada.mouseX = ev.clientX
@@ -808,6 +1122,11 @@
   window.addEventListener('pointerup', () => { entrada.turboPressionado = false })
 
   window.addEventListener('keydown', (ev) => {
+    // digitando o nome: as teclas são texto, não comando
+    if (ev.target === el.campoNome) {
+      if (ev.key === 'Enter') { el.campoNome.blur(); comecar() }
+      return
+    }
     entrada.teclas.add(ev.key.toLowerCase())
     if (ev.code === 'Space') {
       entrada.turboPressionado = true
@@ -817,7 +1136,7 @@
       entrada.usandoMouse = false
       ev.preventDefault()
     }
-    if (ev.key === 'Enter' && !jogo.rodando) comecar()
+    if (ev.key === 'Enter' && !jogo.rodando && el.telaLoja.classList.contains('oculta')) comecar()
   })
   window.addEventListener('keyup', (ev) => {
     entrada.teclas.delete(ev.key.toLowerCase())
@@ -870,7 +1189,8 @@
           c.angulo = c.alvoAngulo = aleatorio(-Math.PI, Math.PI)
           c.segmentos = SEGMENTOS_INICIAIS + Math.floor(aleatorio(4, 20))
           c.pontos = c.segmentos * 10
-          c.matiz = aleatorio(0, 360)
+          c.visual = escolhe(VISUAIS)
+          c.matiz = c.visual.arcoiris ? aleatorio(0, 360) : c.visual.matiz
           c.viva = true
           atualizaRaio(c)
           preencheTrilha(c)
@@ -1025,27 +1345,33 @@
     return pts
   }
 
+  // cor de um pedaço do corpo: o visual arco-íris varia com o tempo,
+  // os demais mantêm a cor da pele escolhida na loja
+  function corDoCorpo (c, i, luz) {
+    const v = c.visual
+    if (v.arcoiris) return `hsl(${(c.matiz + i * 2.6 + jogo.tempo * 26) % 360} 100% ${luz}%)`
+    return `hsl(${(v.matiz + i * 0.8) % 360} ${v.saturacao || 96}% ${luz}%)`
+  }
+
   // corpo neon de espessura constante: traçado em pedaços para variar a cor
-  function tracaCorpo (c, pts, largura, dx, dy, luz, alpha, aditivo) {
-    ctx.save()
-    if (aditivo) ctx.globalCompositeOperation = 'lighter'
-    ctx.globalAlpha = alpha
-    ctx.lineWidth = largura
-    ctx.lineCap = 'round'
-    ctx.lineJoin = 'round'
+  function tracaCorpo (g, c, pts, largura, dx, dy, luz, alpha, aditivo) {
+    g.save()
+    if (aditivo) g.globalCompositeOperation = 'lighter'
+    g.globalAlpha = alpha
+    g.lineWidth = largura
+    g.lineCap = 'round'
+    g.lineJoin = 'round'
 
     const passo = 5
     for (let i = 0; i < pts.length - 1; i += passo) {
       const fim = Math.min(pts.length - 1, i + passo)
-      ctx.beginPath()
-      ctx.moveTo(pts[i].x + dx, pts[i].y + dy)
-      for (let j = i + 1; j <= fim; j++) ctx.lineTo(pts[j].x + dx, pts[j].y + dy)
-      ctx.strokeStyle = luz === null
-        ? 'rgba(0,0,0,0.32)'
-        : `hsl(${(c.matiz + i * 2.6 + jogo.tempo * 26) % 360} 100% ${luz}%)`
-      ctx.stroke()
+      g.beginPath()
+      g.moveTo(pts[i].x + dx, pts[i].y + dy)
+      for (let j = i + 1; j <= fim; j++) g.lineTo(pts[j].x + dx, pts[j].y + dy)
+      g.strokeStyle = luz === null ? 'rgba(0,0,0,0.32)' : corDoCorpo(c, i, luz)
+      g.stroke()
     }
-    ctx.restore()
+    g.restore()
   }
 
   function desenhaCobra (c) {
@@ -1064,19 +1390,28 @@
     const r = c.raio
     const eu = c === jogador
 
-    tracaCorpo(c, pts, r * 2, r * 0.34, r * 0.5, null, 1, false)              // sombra no chão
-    tracaCorpo(c, pts, r * 3.6, 0, 0, 58, c.turbo ? 0.3 : (eu ? 0.2 : 0.14), true) // halo neon
-    tracaCorpo(c, pts, r * 2, 0, 0, 46, 1, false)                             // corpo
-    tracaCorpo(c, pts, r * 1.15, 0, -r * 0.34, 66, 0.85, false)               // luz de cima
-    tracaCorpo(c, pts, r * 0.42, -r * 0.16, -r * 0.56, 92, 0.6, false)        // reflexo
-    tracaCorpo(c, pts, r * 2, 0, 0, 78, 0.28, true)                           // brilho neon geral
+    desenhaCorpoCompleto(ctx, c, pts, eu)
+    desenhaNome(c, eu)
+  }
 
-    desenhaOlhos(c)
-    if (!eu) desenhaNome(c)
+  // as seis camadas que dão o volume: sombra, halo, corpo, luz, reflexo e brilho
+  function desenhaCorpoCompleto (g, c, pts, destaque) {
+    const r = c.raio
+    tracaCorpo(g, c, pts, r * 2, r * 0.34, r * 0.5, null, 1, false)                        // sombra no chão
+    tracaCorpo(g, c, pts, r * 3.6, 0, 0, 58, c.turbo ? 0.3 : (destaque ? 0.2 : 0.14), true) // halo neon
+    tracaCorpo(g, c, pts, r * 2, 0, 0, 46, 1, false)                                       // corpo
+    tracaCorpo(g, c, pts, r * 1.0, 0, -r * 0.34, 60, 0.7, false)                           // luz de cima
+    tracaCorpo(g, c, pts, r * 0.34, -r * 0.16, -r * 0.56, 86, 0.42, false)                 // reflexo
+    tracaCorpo(g, c, pts, r * 2, 0, 0, 76, 0.18, true)                                     // brilho neon geral
+
+    desenhaCachecol(g, c, pts)
+    desenhaAcessorio(g, c, false)
+    desenhaOlhos(g, c)
+    desenhaAcessorio(g, c, true)
   }
 
   // a cobra não tem cabeça: só os olhinhos sobre a ponta do corpo
-  function desenhaOlhos (c) {
+  function desenhaOlhos (g, c) {
     const r = c.raio
     const dir = c.angulo
     for (const lado of [-0.72, 0.72]) {
@@ -1084,37 +1419,178 @@
       const oy = c.y + Math.sin(dir + lado) * r * 0.5
       const ro = r * 0.36
 
-      const g = ctx.createRadialGradient(ox - ro * 0.3, oy - ro * 0.35, ro * 0.1, ox, oy, ro)
-      g.addColorStop(0, '#ffffff')
-      g.addColorStop(0.75, '#eef5ff')
-      g.addColorStop(1, '#9fb4d0')
-      ctx.beginPath()
-      ctx.arc(ox, oy, ro, 0, Math.PI * 2)
-      ctx.fillStyle = g
-      ctx.fill()
+      const grad = g.createRadialGradient(ox - ro * 0.3, oy - ro * 0.35, ro * 0.1, ox, oy, ro)
+      grad.addColorStop(0, '#ffffff')
+      grad.addColorStop(0.75, '#eef5ff')
+      grad.addColorStop(1, '#9fb4d0')
+      g.beginPath()
+      g.arc(ox, oy, ro, 0, Math.PI * 2)
+      g.fillStyle = grad
+      g.fill()
 
       const px = ox + Math.cos(dir) * ro * 0.44
       const py = oy + Math.sin(dir) * ro * 0.44
-      ctx.beginPath()
-      ctx.arc(px, py, ro * 0.46, 0, Math.PI * 2)
-      ctx.fillStyle = '#0b1023'
-      ctx.fill()
+      g.beginPath()
+      g.arc(px, py, ro * 0.46, 0, Math.PI * 2)
+      g.fillStyle = '#0b1023'
+      g.fill()
 
-      ctx.beginPath()
-      ctx.arc(px - ro * 0.16, py - ro * 0.18, ro * 0.16, 0, Math.PI * 2)
-      ctx.fillStyle = 'rgba(255,255,255,0.92)'
-      ctx.fill()
+      g.beginPath()
+      g.arc(px - ro * 0.16, py - ro * 0.18, ro * 0.16, 0, Math.PI * 2)
+      g.fillStyle = 'rgba(255,255,255,0.92)'
+      g.fill()
     }
   }
 
-  function desenhaNome (c) {
+  // ------------------------------------------------------------------- acessórios
+  function tom (c, variacao) {
+    const a = c.visual.ac || { h: 0, s: 80, l: 50 }
+    return `hsl(${a.h} ${a.s}% ${clamp(a.l + variacao, 5, 96)}%)`
+  }
+
+  // o cachecol fica no corpo, algumas peças atrás da ponta
+  function desenhaCachecol (g, c, pts) {
+    if (c.visual.acessorio !== 'cachecol') return
+    const i = Math.min(pts.length - 2, 4)
+    const p = pts[i]
+    const seguinte = pts[i + 1] || pts[i]
+    const r = c.raio
+    const ang = Math.atan2(p.y - seguinte.y, p.x - seguinte.x)
+
+    g.save()
+    g.translate(p.x, p.y)
+    g.rotate(ang)
+    g.shadowColor = 'rgba(4, 6, 20, 0.6)'
+    g.shadowBlur = r * 0.45
+
+    g.fillStyle = tom(c, 0)
+    g.fillRect(-r * 0.42, -r * 1.15, r * 0.84, r * 2.3)          // volta no pescoço
+    g.fillStyle = tom(c, 18)
+    g.fillRect(-r * 0.42, -r * 0.5, r * 0.84, r * 0.34)          // listra clara
+    g.fillRect(-r * 0.42, r * 0.2, r * 0.84, r * 0.34)
+
+    g.fillStyle = tom(c, -8)                                     // pontas balançando
+    g.fillRect(-r * 1.5, r * 0.62, r * 1.2, r * 0.46)
+    g.fillStyle = tom(c, 12)
+    g.fillRect(-r * 1.5, r * 0.62, r * 0.28, r * 0.46)
+    g.restore()
+  }
+
+  // acessórios de cabeça: desenhados no espaço local, com +x apontando para a frente
+  function desenhaAcessorio (g, c, sobreOsOlhos) {
+    const tipo = c.visual.acessorio
+    if (!tipo || tipo === 'cachecol') return
+    if ((tipo === 'oculos') !== sobreOsOlhos) return
+
+    const r = c.raio
+    const TAU = Math.PI * 2
+    g.save()
+    g.translate(c.x, c.y)
+    g.rotate(c.angulo)
+    // sombra própria: destaca o acessório do brilho do corpo
+    g.shadowColor = 'rgba(4, 6, 20, 0.65)'
+    g.shadowBlur = r * 0.5
+    g.shadowOffsetY = r * 0.12
+
+    if (tipo === 'bone') {
+      g.fillStyle = tom(c, -16)                                  // aba
+      g.beginPath(); g.ellipse(r * 0.72, 0, r * 0.6, r * 0.82, 0, 0, TAU); g.fill()
+      g.fillStyle = tom(c, 0)                                    // copa
+      g.beginPath(); g.arc(-r * 0.2, 0, r * 0.86, 0, TAU); g.fill()
+      g.fillStyle = tom(c, 16)
+      g.beginPath(); g.arc(-r * 0.2, 0, r * 0.2, 0, TAU); g.fill()
+    } else if (tipo === 'touca') {
+      g.fillStyle = tom(c, 0)                                    // lã
+      g.beginPath(); g.arc(-r * 0.18, 0, r * 0.9, 0, TAU); g.fill()
+      g.fillStyle = tom(c, -14)                                  // barra dobrada
+      g.fillRect(r * 0.3, -r * 0.86, r * 0.34, r * 1.72)
+      g.fillStyle = tom(c, 26)                                   // pompom
+      g.beginPath(); g.arc(-r * 0.95, 0, r * 0.36, 0, TAU); g.fill()
+    } else if (tipo === 'festa') {
+      g.fillStyle = tom(c, 0)                                    // cone
+      g.beginPath()
+      g.moveTo(r * 1.75, 0)
+      g.lineTo(-r * 0.45, -r * 0.86)
+      g.lineTo(-r * 0.45, r * 0.86)
+      g.closePath(); g.fill()
+      g.fillStyle = tom(c, 24)                                   // listras
+      g.beginPath(); g.moveTo(r * 0.75, -r * 0.42); g.lineTo(r * 0.55, -r * 0.5); g.lineTo(r * 0.55, r * 0.5); g.lineTo(r * 0.75, r * 0.42); g.closePath(); g.fill()
+      g.beginPath(); g.moveTo(r * 0.1, -r * 0.66); g.lineTo(-r * 0.1, -r * 0.72); g.lineTo(-r * 0.1, r * 0.72); g.lineTo(r * 0.1, r * 0.66); g.closePath(); g.fill()
+      g.fillStyle = '#fff6b0'                                    // pompom da ponta
+      g.beginPath(); g.arc(r * 1.8, 0, r * 0.24, 0, TAU); g.fill()
+    } else if (tipo === 'cartola') {
+      g.fillStyle = tom(c, -6)                                   // aba
+      g.beginPath(); g.ellipse(0, 0, r * 1.2, r * 1.2, 0, 0, TAU); g.fill()
+      g.strokeStyle = 'hsl(352 78% 48%)'                         // fita
+      g.lineWidth = r * 0.22
+      g.beginPath(); g.arc(0, 0, r * 0.84, 0, TAU); g.stroke()
+      g.fillStyle = tom(c, 10)                                   // copa
+      g.beginPath(); g.arc(0, 0, r * 0.72, 0, TAU); g.fill()
+      g.fillStyle = 'rgba(255,255,255,0.16)'
+      g.beginPath(); g.ellipse(-r * 0.22, -r * 0.24, r * 0.28, r * 0.16, -0.6, 0, TAU); g.fill()
+    } else if (tipo === 'laco') {
+      g.fillStyle = tom(c, 0)
+      g.beginPath(); g.moveTo(0, 0); g.lineTo(-r * 0.5, -r * 1.15); g.lineTo(r * 0.5, -r * 1.0); g.closePath(); g.fill()
+      g.beginPath(); g.moveTo(0, 0); g.lineTo(-r * 0.5, r * 1.15); g.lineTo(r * 0.5, r * 1.0); g.closePath(); g.fill()
+      g.fillStyle = tom(c, 16)
+      g.beginPath(); g.arc(0, 0, r * 0.26, 0, TAU); g.fill()
+    } else if (tipo === 'oculos') {
+      g.fillStyle = tom(c, 0)
+      g.fillRect(r * 0.12, -r * 0.62, r * 0.72, r * 1.24)        // ponte + armação
+      g.fillStyle = 'rgba(6, 10, 24, 0.94)'
+      g.beginPath(); g.ellipse(r * 0.48, -r * 0.42, r * 0.34, r * 0.3, 0, 0, TAU); g.fill()
+      g.beginPath(); g.ellipse(r * 0.48, r * 0.42, r * 0.34, r * 0.3, 0, 0, TAU); g.fill()
+      g.strokeStyle = 'rgba(255,255,255,0.5)'                    // reflexo nas lentes
+      g.lineWidth = r * 0.1
+      g.beginPath(); g.moveTo(r * 0.36, -r * 0.54); g.lineTo(r * 0.6, -r * 0.32); g.stroke()
+      g.beginPath(); g.moveTo(r * 0.36, r * 0.3); g.lineTo(r * 0.6, r * 0.52); g.stroke()
+    } else if (tipo === 'fone') {
+      g.strokeStyle = tom(c, -10)                                // arco
+      g.lineWidth = r * 0.26
+      g.beginPath(); g.arc(0, 0, r * 0.92, Math.PI * 0.62, Math.PI * 1.38); g.stroke()
+      for (const lado of [-1, 1]) {                              // conchas
+        g.fillStyle = tom(c, 0)
+        g.beginPath(); g.ellipse(0, lado * r * 0.96, r * 0.42, r * 0.34, 0, 0, TAU); g.fill()
+        g.fillStyle = tom(c, 22)
+        g.beginPath(); g.ellipse(0, lado * r * 0.96, r * 0.2, r * 0.16, 0, 0, TAU); g.fill()
+      }
+    } else if (tipo === 'chifres') {
+      g.fillStyle = tom(c, 0)
+      for (const lado of [-1, 1]) {
+        g.beginPath()
+        g.moveTo(-r * 0.1, lado * r * 0.5)
+        g.lineTo(r * 1.1, lado * r * 1.25)
+        g.lineTo(r * 0.2, lado * r * 0.95)
+        g.closePath(); g.fill()
+      }
+    } else if (tipo === 'coroa') {
+      g.fillStyle = tom(c, 0)
+      g.beginPath()
+      for (let i = 0; i < 10; i++) {                             // aro com pontas
+        const ang = (i / 10) * TAU
+        const raio = i % 2 === 0 ? r * 1.25 : r * 0.8
+        const x = Math.cos(ang) * raio
+        const y = Math.sin(ang) * raio
+        if (i === 0) g.moveTo(x, y); else g.lineTo(x, y)
+      }
+      g.closePath(); g.fill()
+      g.fillStyle = tom(c, 22)
+      g.beginPath(); g.arc(0, 0, r * 0.58, 0, TAU); g.fill()
+      g.fillStyle = 'hsl(340 90% 62%)'                           // pedra
+      g.beginPath(); g.arc(0, 0, r * 0.22, 0, TAU); g.fill()
+    }
+
+    g.restore()
+  }
+
+  function desenhaNome (c, destaque) {
     ctx.save()
-    ctx.font = '600 14px system-ui, sans-serif'
+    ctx.font = (destaque ? '800 15px ' : '600 14px ') + 'system-ui, sans-serif'
     ctx.textAlign = 'center'
-    ctx.fillStyle = 'rgba(255,255,255,0.72)'
+    ctx.fillStyle = destaque ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.72)'
     ctx.shadowColor = 'rgba(0,0,0,0.8)'
     ctx.shadowBlur = 6
-    ctx.fillText(c.nome, c.x, c.y - c.raio - 14)
+    ctx.fillText(c.nome, c.x, c.y - c.raio - 16)
     ctx.restore()
   }
 
@@ -1219,8 +1695,13 @@
   document.getElementById('botao-jogar').addEventListener('click', comecar)
   document.getElementById('botao-reiniciar').addEventListener('click', comecar)
   document.getElementById('botao-casa').addEventListener('click', voltarParaCasa)
+  document.getElementById('botao-loja').addEventListener('click', () => abreLoja('inicio'))
+  document.getElementById('botao-loja-fim').addEventListener('click', () => abreLoja('fim'))
+  document.getElementById('botao-fechar-loja').addEventListener('click', fechaLoja)
 
   preparaMundo()
+  el.campoNome.value = perfil.nome
+  atualizaPerfilNaTela()
   el.recorde.textContent = jogo.recorde
   requestAnimationFrame(quadro)
 })()

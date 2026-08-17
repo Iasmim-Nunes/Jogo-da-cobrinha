@@ -1,0 +1,1229 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Cobrinha Neon 3D — estilo agar.io</title>
+<style>
+  :root {
+    --neon-1: #00e5ff;
+    --neon-2: #ff2fb9;
+    --neon-3: #7cff4f;
+    --fundo-1: #070b1e;
+    --fundo-2: #14063a;
+    --texto: #eaf2ff;
+    --fonte: system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    height: 100%;
+    overflow: hidden;
+    background: radial-gradient(120% 120% at 50% 0%, var(--fundo-2) 0%, var(--fundo-1) 60%, #02030a 100%);
+    color: var(--texto);
+    font-family: var(--fonte);
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+    cursor: none;
+  }
+
+  .hud {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .topo {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .placar {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .cartao {
+    background: rgba(10, 16, 40, 0.55);
+    border: 1px solid rgba(140, 200, 255, 0.25);
+    border-radius: 14px;
+    padding: 8px 14px;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  }
+
+  .cartao b {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    opacity: 0.65;
+    font-weight: 600;
+  }
+
+  .cartao span {
+    font-size: 24px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    text-shadow: 0 0 18px currentColor;
+  }
+
+  #valor-pontos { color: var(--neon-3); }
+  #valor-tamanho { color: var(--neon-1); }
+  #valor-recorde { color: var(--neon-2); }
+
+  .ranking {
+    min-width: 172px;
+    font-size: 13px;
+    background: rgba(10, 16, 40, 0.55);
+    border: 1px solid rgba(140, 200, 255, 0.25);
+    border-radius: 14px;
+    padding: 10px 12px;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  }
+
+  .ranking b {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    opacity: 0.65;
+    margin-bottom: 6px;
+  }
+
+  .ranking li {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 2px 0;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .ranking ol {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: pos;
+  }
+
+  .ranking li i {
+    font-style: normal;
+    opacity: 0.85;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .ranking li.eu i { font-weight: 800; }
+
+  .ponto-cor {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 99px;
+    margin-right: 7px;
+    vertical-align: middle;
+    box-shadow: 0 0 8px currentColor;
+    background: currentColor;
+  }
+
+  .dica {
+    align-self: center;
+    font-size: 13px;
+    opacity: 0.55;
+    text-align: center;
+    line-height: 1.6;
+  }
+
+  .barra-turbo {
+    position: fixed;
+    left: 50%;
+    bottom: 62px;
+    transform: translateX(-50%);
+    width: min(280px, 60vw);
+    height: 8px;
+    border-radius: 99px;
+    background: rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.25s;
+  }
+
+  .barra-turbo.ativa { opacity: 1; }
+
+  .barra-turbo i {
+    display: block;
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(90deg, var(--neon-3), var(--neon-1), var(--neon-2));
+    box-shadow: 0 0 16px var(--neon-1);
+  }
+
+  .tela {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    text-align: center;
+    padding: 24px;
+    background: radial-gradient(80% 80% at 50% 45%, rgba(20, 6, 58, 0.72), rgba(3, 4, 14, 0.94));
+    backdrop-filter: blur(6px);
+    z-index: 5;
+  }
+
+  .tela.oculta { display: none; }
+
+  .tela h1 {
+    margin: 0 0 6px;
+    font-size: clamp(38px, 9vw, 78px);
+    /* line-height folgada + respiro embaixo: com background-clip:text as
+       descidas de "g" e "j" eram cortadas */
+    line-height: 1.18;
+    padding-bottom: 0.12em;
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    background: linear-gradient(100deg, var(--neon-3), var(--neon-1) 45%, var(--neon-2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter: drop-shadow(0 6px 30px rgba(0, 229, 255, 0.35));
+  }
+
+  .tela p {
+    margin: 0 auto 22px;
+    max-width: 480px;
+    font-size: 15px;
+    line-height: 1.7;
+    opacity: 0.78;
+  }
+
+  .tela kbd {
+    display: inline-block;
+    padding: 2px 8px;
+    margin: 0 2px;
+    border-radius: 7px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-bottom-width: 2px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .acoes {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .botao {
+    pointer-events: auto;
+    border: 0;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 17px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    color: #04101c;
+    padding: 15px 40px;
+    border-radius: 99px;
+    background: linear-gradient(180deg, #9dfbff, var(--neon-1) 40%, #009fd6);
+    box-shadow: 0 12px 30px rgba(0, 200, 255, 0.35), inset 0 2px 0 rgba(255, 255, 255, 0.7), inset 0 -3px 0 rgba(0, 0, 0, 0.25);
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+  }
+
+  .botao:hover { transform: translateY(-2px); }
+  .botao:active { transform: translateY(1px); }
+
+  .botao.secundario {
+    color: var(--texto);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(160, 210, 255, 0.35);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  }
+
+  .botao.secundario:hover { background: rgba(255, 255, 255, 0.14); }
+
+  .resumo {
+    display: flex;
+    gap: 26px;
+    justify-content: center;
+    margin-bottom: 26px;
+    flex-wrap: wrap;
+  }
+
+  .resumo div b {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    opacity: 0.6;
+  }
+
+  .resumo div span {
+    font-size: 34px;
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+  }
+
+  #fim-motivo {
+    margin-bottom: 18px;
+    font-size: 15px;
+    opacity: 0.8;
+  }
+</style>
+</head>
+<body>
+
+<canvas id="tela-jogo"></canvas>
+
+<div class="hud">
+  <div class="topo">
+    <div class="placar">
+      <div class="cartao"><b>Pontos</b><span id="valor-pontos">0</span></div>
+      <div class="cartao"><b>Tamanho</b><span id="valor-tamanho">6</span></div>
+      <div class="cartao"><b>Recorde</b><span id="valor-recorde">0</span></div>
+    </div>
+    <div class="ranking"><b>Maiores cobras</b><ol id="lista-ranking"></ol></div>
+  </div>
+  <div class="dica">Mova o mouse para guiar &middot; segure para turbo &middot; desvie das outras cobras</div>
+</div>
+
+<div class="barra-turbo" id="barra-turbo"><i id="preenche-turbo"></i></div>
+
+<div class="tela" id="tela-inicio">
+  <div>
+    <h1>Cobrinha Neon</h1>
+    <p>
+      Você é a cobra neon. Colete as esferas brilhantes para crescer e
+      <strong>não encoste nas outras cobras</strong> — elas caçam a mesma comida que você.
+      Use <kbd>mouse</kbd> ou <kbd>W A S D</kbd> / <kbd>setas</kbd> para virar e
+      <kbd>espaço</kbd> ou <kbd>clique</kbd> para o turbo (gasta um pouco do corpo).
+    </p>
+    <div class="acoes">
+      <button class="botao" id="botao-jogar">Começar</button>
+    </div>
+  </div>
+</div>
+
+<div class="tela oculta" id="tela-fim">
+  <div>
+    <h1>Fim de jogo</h1>
+    <p id="fim-motivo">Você bateu em outra cobra.</p>
+    <div class="resumo">
+      <div><b>Pontos</b><span id="fim-pontos">0</span></div>
+      <div><b>Tamanho</b><span id="fim-tamanho">0</span></div>
+      <div><b>Recorde</b><span id="fim-recorde">0</span></div>
+    </div>
+    <div class="acoes">
+      <button class="botao" id="botao-reiniciar">Jogar de novo</button>
+      <button class="botao secundario" id="botao-casa">Voltar para casa</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  'use strict'
+
+  const canvas = document.getElementById('tela-jogo')
+  const ctx = canvas.getContext('2d')
+
+  // ---------------------------------------------------------------- constantes
+  const MUNDO = { largura: 4600, altura: 4600 }
+  const PASSO_TRILHA = 4          // distância entre pontos gravados do caminho
+  const COMIDAS_ALVO = 700        // quantidade de comidas vivas no mundo
+  const SEGMENTOS_INICIAIS = 6
+  const IMUNES = 30               // segmentos da frente que não colidem com a própria cabeça
+  const RIVAIS = 7                // quantas cobras controladas pelo computador
+  const SEGMENTOS_MAX_IA = 220
+
+  const NOMES = ['Víbora', 'Naja', 'Coral', 'Jiboia', 'Píton', 'Cascavel', 'Sucuri', 'Salamandra', 'Anaconda']
+
+  const el = {
+    pontos: document.getElementById('valor-pontos'),
+    tamanho: document.getElementById('valor-tamanho'),
+    recorde: document.getElementById('valor-recorde'),
+    ranking: document.getElementById('lista-ranking'),
+    fimPontos: document.getElementById('fim-pontos'),
+    fimTamanho: document.getElementById('fim-tamanho'),
+    fimRecorde: document.getElementById('fim-recorde'),
+    fimMotivo: document.getElementById('fim-motivo'),
+    telaInicio: document.getElementById('tela-inicio'),
+    telaFim: document.getElementById('tela-fim'),
+    barraTurbo: document.getElementById('barra-turbo'),
+    preencheTurbo: document.getElementById('preenche-turbo')
+  }
+
+  let larguraTela = 0, alturaTela = 0, dpr = 1
+
+  function redimensionar () {
+    dpr = Math.min(window.devicePixelRatio || 1, 2)
+    larguraTela = window.innerWidth
+    alturaTela = window.innerHeight
+    canvas.width = Math.floor(larguraTela * dpr)
+    canvas.height = Math.floor(alturaTela * dpr)
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+  }
+  window.addEventListener('resize', redimensionar)
+  redimensionar()
+
+  // ------------------------------------------------------------------- utilidades
+  const clamp = (v, a, b) => v < a ? a : (v > b ? b : v)
+  const aleatorio = (a, b) => a + Math.random() * (b - a)
+  const escolhe = (lista) => lista[Math.floor(Math.random() * lista.length)]
+
+  function normalizaAngulo (a) {
+    while (a > Math.PI) a -= Math.PI * 2
+    while (a < -Math.PI) a += Math.PI * 2
+    return a
+  }
+
+  // localStorage não existe em todo contexto (ex.: página aberta via data:)
+  function leRecorde () {
+    try { return Number(localStorage.getItem('cobrinha3d-recorde') || 0) } catch (e) { return 0 }
+  }
+  function gravaRecorde (valor) {
+    try { localStorage.setItem('cobrinha3d-recorde', String(valor)) } catch (e) { /* segue sem salvar */ }
+  }
+
+  // ------------------------------------------------------------------- estado
+  const jogo = {
+    rodando: false,
+    tempo: 0,
+    pontos: 0,
+    recorde: leRecorde(),
+    tremor: 0
+  }
+
+  const camera = { x: MUNDO.largura / 2, y: MUNDO.altura / 2, zoom: 1 }
+  const comidas = []
+  const particulas = []
+  const cobras = []
+  let jogador = null
+
+  const entrada = {
+    mouseX: 0, mouseY: 0,
+    usandoMouse: false,
+    turboPressionado: false,
+    teclas: new Set()
+  }
+
+  // ------------------------------------------------------------------- áudio
+  let audioCtx = null
+  function bipe (frequencia, duracao, volume) {
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)()
+      const osc = audioCtx.createOscillator()
+      const ganho = audioCtx.createGain()
+      osc.type = 'triangle'
+      osc.frequency.setValueAtTime(frequencia, audioCtx.currentTime)
+      osc.frequency.exponentialRampToValueAtTime(frequencia * 1.6, audioCtx.currentTime + duracao)
+      ganho.gain.setValueAtTime(volume, audioCtx.currentTime)
+      ganho.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duracao)
+      osc.connect(ganho).connect(audioCtx.destination)
+      osc.start()
+      osc.stop(audioCtx.currentTime + duracao)
+    } catch (e) { /* áudio é opcional */ }
+  }
+
+  // ------------------------------------------------------------------- comida
+  function novaComida (x, y, valor) {
+    return {
+      x: x != null ? x : aleatorio(60, MUNDO.largura - 60),
+      y: y != null ? y : aleatorio(60, MUNDO.altura - 60),
+      raio: valor ? 8 + valor * 1.5 : aleatorio(9, 14),
+      matiz: Math.floor(aleatorio(0, 360)),
+      valor: valor || 1,
+      fase: aleatorio(0, Math.PI * 2),
+      nascimento: jogo.tempo
+    }
+  }
+
+  function abasteceComidas () {
+    while (comidas.length < COMIDAS_ALVO) comidas.push(novaComida())
+  }
+
+  function explodir (x, y, matiz, quantidade, forca) {
+    for (let i = 0; i < quantidade; i++) {
+      const a = aleatorio(0, Math.PI * 2)
+      const v = aleatorio(40, forca)
+      particulas.push({
+        x, y,
+        vx: Math.cos(a) * v,
+        vy: Math.sin(a) * v,
+        raio: aleatorio(2, 6),
+        matiz: matiz + aleatorio(-25, 25),
+        vida: 1
+      })
+    }
+  }
+
+  // ------------------------------------------------------------------- cobras
+  function criaCobra (config) {
+    const c = {
+      x: config.x,
+      y: config.y,
+      angulo: config.angulo,
+      alvoAngulo: config.angulo,
+      raio: 13,
+      segmentos: SEGMENTOS_INICIAIS,
+      trilha: [],
+      matiz: config.matiz,
+      ia: !!config.ia,
+      nome: config.nome,
+      pontos: 0,
+      viva: true,
+      turbo: false,
+      gastoTurbo: 0,
+      relogioIA: 0,
+      desvio: 0,
+      renascimento: 0
+    }
+    preencheTrilha(c)
+    return c
+  }
+
+  function preencheTrilha (c) {
+    c.trilha.length = 0
+    for (let i = 0; i < 700; i++) {
+      c.trilha.push({
+        x: c.x - Math.cos(c.angulo) * i * PASSO_TRILHA,
+        y: c.y - Math.sin(c.angulo) * i * PASSO_TRILHA
+      })
+    }
+  }
+
+  function espacamento (c) {
+    return c.raio * 0.62
+  }
+
+  // posição do segmento `indice` ao longo do caminho já percorrido
+  function pontoDaTrilha (c, indice) {
+    const passo = espacamento(c) / PASSO_TRILHA
+    const i = Math.min(c.trilha.length - 1, Math.round(indice * passo))
+    return c.trilha[i] || c.trilha[c.trilha.length - 1]
+  }
+
+  function atualizaRaio (c) {
+    c.raio = clamp(12 + Math.sqrt(c.segmentos) * 1.5, 13, 44)
+  }
+
+  function nascePosicaoLivre () {
+    // tenta um ponto longe das cabeças existentes
+    for (let tentativa = 0; tentativa < 30; tentativa++) {
+      const x = aleatorio(400, MUNDO.largura - 400)
+      const y = aleatorio(400, MUNDO.altura - 400)
+      let ok = true
+      for (const c of cobras) {
+        if (c.viva && Math.hypot(c.x - x, c.y - y) < 700) { ok = false; break }
+      }
+      if (ok) return { x, y }
+    }
+    return { x: aleatorio(400, MUNDO.largura - 400), y: aleatorio(400, MUNDO.altura - 400) }
+  }
+
+  function criaRival () {
+    const pos = nascePosicaoLivre()
+    return criaCobra({
+      x: pos.x,
+      y: pos.y,
+      angulo: aleatorio(-Math.PI, Math.PI),
+      matiz: aleatorio(0, 360),
+      ia: true,
+      nome: escolhe(NOMES) + ' ' + Math.floor(aleatorio(1, 99))
+    })
+  }
+
+  function movimenta (c, dt) {
+    // giro suave e limitado — quanto maior a cobra, mais lenta a curva
+    const giroMax = (5.2 - Math.min(2.6, c.raio * 0.06)) * dt
+    const delta = normalizaAngulo(c.alvoAngulo - c.angulo)
+    c.angulo = normalizaAngulo(c.angulo + clamp(delta, -giroMax, giroMax))
+
+    let velocidade = 230 - Math.min(75, c.raio * 2.2)
+    if (c.turbo) velocidade *= 1.85
+
+    c.x += Math.cos(c.angulo) * velocidade * dt
+    c.y += Math.sin(c.angulo) * velocidade * dt
+
+    const m = c.raio + 4
+    c.x = clamp(c.x, m, MUNDO.largura - m)
+    c.y = clamp(c.y, m, MUNDO.altura - m)
+
+    // grava o caminho percorrido, que é o corpo
+    const ultimo = c.trilha[0]
+    const dist = Math.hypot(c.x - ultimo.x, c.y - ultimo.y)
+    if (dist >= PASSO_TRILHA) {
+      const passos = Math.min(40, Math.floor(dist / PASSO_TRILHA))
+      for (let i = 1; i <= passos; i++) {
+        const t = (i * PASSO_TRILHA) / dist
+        c.trilha.unshift({
+          x: ultimo.x + (c.x - ultimo.x) * t,
+          y: ultimo.y + (c.y - ultimo.y) * t
+        })
+      }
+      const necessario = Math.ceil((c.segmentos + 4) * espacamento(c) / PASSO_TRILHA) + 8
+      if (c.trilha.length > necessario) c.trilha.length = necessario
+    }
+  }
+
+  function consomeTurbo (c, dt) {
+    if (!c.turbo) return
+    c.gastoTurbo += dt
+    if (c.gastoTurbo > 0.16) {
+      c.gastoTurbo = 0
+      c.segmentos = Math.max(10, c.segmentos - 1)
+      atualizaRaio(c)
+      const cauda = pontoDaTrilha(c, c.segmentos)
+      if (cauda) comidas.push(novaComida(cauda.x + aleatorio(-8, 8), cauda.y + aleatorio(-8, 8), 1))
+    }
+  }
+
+  function come (c) {
+    for (let i = comidas.length - 1; i >= 0; i--) {
+      const f = comidas[i]
+      if (Math.hypot(f.x - c.x, f.y - c.y) < c.raio + f.raio) {
+        comidas.splice(i, 1)
+        c.segmentos += f.valor
+        c.pontos += f.valor * 10
+        atualizaRaio(c)
+        c.matiz = (c.matiz + 2) % 360
+        explodir(f.x, f.y, f.matiz, c === jogador ? 12 : 5, 220)
+        if (c === jogador) {
+          jogo.pontos = c.pontos
+          bipe(420 + Math.min(600, jogo.pontos * 0.6), 0.09, 0.05)
+          atualizaHud()
+        }
+      }
+    }
+  }
+
+  // devolve o corpo da cobra em forma de comida quando ela morre
+  function viraComida (c) {
+    for (let i = 1; i < c.segmentos; i += 3) {
+      const p = pontoDaTrilha(c, i)
+      if (!p) break
+      comidas.push(novaComida(p.x + aleatorio(-6, 6), p.y + aleatorio(-6, 6), 2))
+    }
+    explodir(c.x, c.y, c.matiz, 26, 340)
+  }
+
+  // ------------------------------------------------------------------- colisões
+  // procura o corpo de outra cobra perto de (x, y); ignora `dona`
+  function corpoProximo (x, y, distancia, dona) {
+    for (const c of cobras) {
+      if (!c.viva || c === dona) continue
+      // descarte rápido: cabeça muito longe e corpo curto não alcança
+      const alcance = distancia + c.segmentos * espacamento(c)
+      if (Math.abs(c.x - x) > alcance || Math.abs(c.y - y) > alcance) continue
+      for (let i = 0; i <= c.segmentos; i += 2) {
+        const p = i === 0 ? c : pontoDaTrilha(c, i)
+        if (!p) break
+        if (Math.hypot(p.x - x, p.y - y) < distancia + c.raio) return { cobra: c, ponto: p }
+      }
+    }
+    return null
+  }
+
+  function bateuNoProprioCorpo (c) {
+    const limite = c.raio * 0.6
+    for (let i = IMUNES; i < c.segmentos; i++) {
+      const p = pontoDaTrilha(c, i)
+      if (!p) break
+      if (Math.hypot(p.x - c.x, p.y - c.y) < limite) return true
+    }
+    return false
+  }
+
+  // ------------------------------------------------------------------- cérebro das rivais
+  function pensa (c, dt) {
+    c.relogioIA -= dt
+
+    // 1) desviar de corpos à frente tem prioridade sobre tudo
+    const olhar = c.raio * 5 + 40
+    const frenteX = c.x + Math.cos(c.angulo) * olhar
+    const frenteY = c.y + Math.sin(c.angulo) * olhar
+    const perigo = corpoProximo(frenteX, frenteY, c.raio * 2.2, c, false)
+
+    if (perigo) {
+      const anguloPerigo = Math.atan2(perigo.ponto.y - c.y, perigo.ponto.x - c.x)
+      const lado = normalizaAngulo(anguloPerigo - c.angulo) > 0 ? -1 : 1
+      c.alvoAngulo = c.angulo + lado * 1.5
+      c.relogioIA = 0.35
+      c.turbo = false
+      return
+    }
+
+    // 2) desviar das paredes
+    const margem = 300
+    if (c.x < margem || c.x > MUNDO.largura - margem || c.y < margem || c.y > MUNDO.altura - margem) {
+      c.alvoAngulo = Math.atan2(MUNDO.altura / 2 - c.y, MUNDO.largura / 2 - c.x) + aleatorio(-0.5, 0.5)
+      c.relogioIA = 0.5
+      return
+    }
+
+    // 3) caçar a comida mais próxima
+    if (c.relogioIA > 0) return
+    c.relogioIA = aleatorio(0.18, 0.35)
+
+    let melhor = null
+    let melhorDist = 1100
+    for (let i = 0; i < comidas.length; i += 2) {
+      const f = comidas[i]
+      const d = Math.hypot(f.x - c.x, f.y - c.y)
+      if (d < melhorDist) { melhorDist = d; melhor = f }
+    }
+
+    if (melhor) {
+      c.alvoAngulo = Math.atan2(melhor.y - c.y, melhor.x - c.x)
+      c.turbo = melhorDist > 500 && c.segmentos > 26 && Math.random() < 0.25
+    } else {
+      c.alvoAngulo = c.angulo + aleatorio(-0.8, 0.8)
+      c.turbo = false
+    }
+  }
+
+  // ------------------------------------------------------------------- partida
+  function preparaMundo () {
+    cobras.length = 0
+    comidas.length = 0
+    particulas.length = 0
+    for (let i = 0; i < RIVAIS; i++) {
+      const rival = criaRival()
+      rival.segmentos = Math.floor(aleatorio(12, 60))
+      atualizaRaio(rival)
+      rival.pontos = rival.segmentos * 10
+      cobras.push(rival)
+    }
+    abasteceComidas()
+  }
+
+  function comecar () {
+    el.telaInicio.classList.add('oculta')
+    el.telaFim.classList.add('oculta')
+    entrada.mouseX = larguraTela / 2
+    entrada.mouseY = alturaTela / 2
+
+    preparaMundo()
+    const pos = nascePosicaoLivre()
+    jogador = criaCobra({
+      x: pos.x,
+      y: pos.y,
+      angulo: aleatorio(-Math.PI, Math.PI),
+      matiz: aleatorio(0, 360),
+      ia: false,
+      nome: 'Você'
+    })
+    cobras.push(jogador)
+    camera.x = jogador.x
+    camera.y = jogador.y
+
+    jogo.pontos = 0
+    jogo.tremor = 0
+    jogo.rodando = true
+    atualizaHud()
+  }
+
+  function voltarParaCasa () {
+    el.telaFim.classList.add('oculta')
+    el.telaInicio.classList.remove('oculta')
+    jogo.rodando = false
+    jogador = null
+    preparaMundo()
+    atualizaHud()
+  }
+
+  function encerrar (motivo) {
+    jogo.rodando = false
+    jogo.tremor = 18
+    viraComida(jogador)
+    bipe(180, 0.5, 0.16)
+
+    const indice = cobras.indexOf(jogador)
+    if (indice >= 0) cobras.splice(indice, 1)
+
+    if (jogo.pontos > jogo.recorde) {
+      jogo.recorde = jogo.pontos
+      gravaRecorde(jogo.recorde)
+    }
+    el.fimMotivo.textContent = motivo
+    el.fimPontos.textContent = jogo.pontos
+    el.fimTamanho.textContent = jogador.segmentos
+    el.fimRecorde.textContent = jogo.recorde
+    jogador = null
+    setTimeout(() => el.telaFim.classList.remove('oculta'), 620)
+  }
+
+  function atualizaHud () {
+    el.pontos.textContent = jogo.pontos
+    el.tamanho.textContent = jogador ? jogador.segmentos : 0
+    el.recorde.textContent = Math.max(jogo.recorde, jogo.pontos)
+  }
+
+  let proximoRanking = 0
+  function atualizaRanking () {
+    if (jogo.tempo < proximoRanking) return
+    proximoRanking = jogo.tempo + 0.5
+
+    const ordenadas = cobras.filter(c => c.viva).slice().sort((a, b) => b.segmentos - a.segmentos).slice(0, 5)
+    el.ranking.innerHTML = ordenadas.map((c, i) => (
+      '<li class="' + (c === jogador ? 'eu' : '') + '">' +
+        '<i><span class="ponto-cor" style="color:hsl(' + Math.round(c.matiz) + ' 100% 60%)"></span>' +
+        (i + 1) + '. ' + c.nome + '</i><em style="font-style:normal">' + c.segmentos + '</em>' +
+      '</li>'
+    )).join('')
+  }
+
+  // ------------------------------------------------------------------- entrada
+  canvas.addEventListener('pointermove', (ev) => {
+    entrada.mouseX = ev.clientX
+    entrada.mouseY = ev.clientY
+    entrada.usandoMouse = true
+  })
+  canvas.addEventListener('pointerdown', (ev) => {
+    entrada.mouseX = ev.clientX
+    entrada.mouseY = ev.clientY
+    entrada.usandoMouse = true
+    entrada.turboPressionado = true
+  })
+  window.addEventListener('pointerup', () => { entrada.turboPressionado = false })
+
+  window.addEventListener('keydown', (ev) => {
+    entrada.teclas.add(ev.key.toLowerCase())
+    if (ev.code === 'Space') {
+      entrada.turboPressionado = true
+      ev.preventDefault()
+    }
+    if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'w', 'a', 's', 'd'].includes(ev.key.toLowerCase())) {
+      entrada.usandoMouse = false
+      ev.preventDefault()
+    }
+    if (ev.key === 'Enter' && !jogo.rodando) comecar()
+  })
+  window.addEventListener('keyup', (ev) => {
+    entrada.teclas.delete(ev.key.toLowerCase())
+    if (ev.code === 'Space') entrada.turboPressionado = false
+  })
+
+  function direcaoDoTeclado () {
+    let dx = 0, dy = 0
+    const t = entrada.teclas
+    if (t.has('arrowleft') || t.has('a')) dx -= 1
+    if (t.has('arrowright') || t.has('d')) dx += 1
+    if (t.has('arrowup') || t.has('w')) dy -= 1
+    if (t.has('arrowdown') || t.has('s')) dy += 1
+    return (dx || dy) ? Math.atan2(dy, dx) : null
+  }
+
+  // ------------------------------------------------------------------- lógica
+  function atualizar (dt) {
+    jogo.tempo += dt
+    jogo.tremor *= Math.pow(0.02, dt)
+
+    // ---- jogador
+    if (jogo.rodando && jogador) {
+      const anguloTeclado = direcaoDoTeclado()
+      if (anguloTeclado !== null) {
+        jogador.alvoAngulo = anguloTeclado
+      } else if (entrada.usandoMouse) {
+        const mundoX = camera.x + (entrada.mouseX - larguraTela / 2) / camera.zoom
+        const mundoY = camera.y + (entrada.mouseY - alturaTela / 2) / camera.zoom
+        const dx = mundoX - jogador.x
+        const dy = mundoY - jogador.y
+        if (Math.hypot(dx, dy) > 6) jogador.alvoAngulo = Math.atan2(dy, dx)
+      }
+      jogador.turbo = entrada.turboPressionado && jogador.segmentos > 10
+      movimenta(jogador, dt)
+      consomeTurbo(jogador, dt)
+      come(jogador)
+      atualizaHud()
+    }
+
+    // ---- rivais (continuam vivas mesmo no menu, dando vida ao cenário)
+    for (const c of cobras) {
+      if (c === jogador) continue
+      if (!c.viva) {
+        c.renascimento -= dt
+        if (c.renascimento <= 0) {
+          const pos = nascePosicaoLivre()
+          c.x = pos.x
+          c.y = pos.y
+          c.angulo = c.alvoAngulo = aleatorio(-Math.PI, Math.PI)
+          c.segmentos = SEGMENTOS_INICIAIS + Math.floor(aleatorio(4, 20))
+          c.pontos = c.segmentos * 10
+          c.matiz = aleatorio(0, 360)
+          c.viva = true
+          atualizaRaio(c)
+          preencheTrilha(c)
+        }
+        continue
+      }
+      if (c.segmentos > SEGMENTOS_MAX_IA) c.segmentos = SEGMENTOS_MAX_IA
+      pensa(c, dt)
+      movimenta(c, dt)
+      consomeTurbo(c, dt)
+      come(c)
+    }
+
+    // ---- colisões entre cobras
+    // o jogador é checado primeiro: numa batida de frente ele também morre,
+    // em vez de a rival morrer antes e livrá-lo da colisão
+    if (jogo.rodando && jogador) {
+      const batida = corpoProximo(jogador.x, jogador.y, jogador.raio * 0.75, jogador)
+      if (batida) {
+        encerrar('Você encostou na cobra ' + batida.cobra.nome + '.')
+      } else if (bateuNoProprioCorpo(jogador)) {
+        encerrar('Você bateu no próprio corpo.')
+      }
+    }
+
+    for (const c of cobras) {
+      if (!c.viva || c === jogador) continue
+      if (corpoProximo(c.x, c.y, c.raio * 0.75, c) || bateuNoProprioCorpo(c)) {
+        c.viva = false
+        c.renascimento = aleatorio(2, 5)
+        viraComida(c)
+      }
+    }
+
+    abasteceComidas()
+    atualizaRanking()
+
+    // ---- partículas
+    for (let i = particulas.length - 1; i >= 0; i--) {
+      const p = particulas[i]
+      p.x += p.vx * dt
+      p.y += p.vy * dt
+      p.vx *= Math.pow(0.08, dt)
+      p.vy *= Math.pow(0.08, dt)
+      p.vida -= dt * 1.5
+      if (p.vida <= 0) particulas.splice(i, 1)
+    }
+
+    // ---- câmera: segue o jogador; no menu, acompanha a maior rival
+    const foco = jogador || cobras.filter(c => c.viva).sort((a, b) => b.segmentos - a.segmentos)[0]
+    if (foco) {
+      const zoomAlvo = clamp(20 / foco.raio, 0.42, 1.25)
+      camera.zoom += (zoomAlvo - camera.zoom) * Math.min(1, dt * 2.4)
+      camera.x += (foco.x - camera.x) * Math.min(1, dt * (jogador ? 7 : 1.6))
+      camera.y += (foco.y - camera.y) * Math.min(1, dt * (jogador ? 7 : 1.6))
+    }
+
+    // ---- HUD do turbo
+    const turboAtivo = !!(jogador && jogador.turbo)
+    el.barraTurbo.classList.toggle('ativa', turboAtivo)
+    if (jogador) el.preencheTurbo.style.width = clamp((jogador.segmentos - 10) / 40, 0, 1) * 100 + '%'
+  }
+
+  // ------------------------------------------------------------------- desenho
+  function desenhaChao () {
+    const passo = 120
+    const x0 = Math.floor((camera.x - larguraTela / 2 / camera.zoom) / passo) * passo
+    const x1 = camera.x + larguraTela / 2 / camera.zoom
+    const y0 = Math.floor((camera.y - alturaTela / 2 / camera.zoom) / passo) * passo
+    const y1 = camera.y + alturaTela / 2 / camera.zoom
+
+    ctx.lineWidth = 1 / camera.zoom
+    ctx.strokeStyle = 'rgba(120, 180, 255, 0.09)'
+    ctx.beginPath()
+    for (let x = x0; x <= x1; x += passo) { ctx.moveTo(x, y0); ctx.lineTo(x, y1) }
+    for (let y = y0; y <= y1; y += passo) { ctx.moveTo(x0, y); ctx.lineTo(x1, y) }
+    ctx.stroke()
+
+    ctx.lineWidth = 8 / camera.zoom
+    ctx.strokeStyle = `hsla(${(jogo.tempo * 40) % 360} 100% 62% / 0.75)`
+    ctx.shadowColor = ctx.strokeStyle
+    ctx.shadowBlur = 40
+    ctx.strokeRect(0, 0, MUNDO.largura, MUNDO.altura)
+    ctx.shadowBlur = 0
+  }
+
+  function limitesVisiveis (margem) {
+    return {
+      x0: camera.x - larguraTela / 2 / camera.zoom - margem,
+      x1: camera.x + larguraTela / 2 / camera.zoom + margem,
+      y0: camera.y - alturaTela / 2 / camera.zoom - margem,
+      y1: camera.y + alturaTela / 2 / camera.zoom + margem
+    }
+  }
+
+  function esfera (x, y, r, matiz, brilho) {
+    const luzX = x - r * 0.34
+    const luzY = y - r * 0.4
+    const g = ctx.createRadialGradient(luzX, luzY, r * 0.06, x, y, r * 1.08)
+    g.addColorStop(0, `hsl(${matiz} 100% ${Math.min(96, 82 + brilho * 14)}%)`)
+    g.addColorStop(0.3, `hsl(${matiz} 100% ${62 + brilho * 8}%)`)
+    g.addColorStop(0.72, `hsl(${matiz} 92% ${38 + brilho * 6}%)`)
+    g.addColorStop(1, `hsl(${matiz + 12} 88% ${14 + brilho * 4}%)`)
+
+    ctx.beginPath()
+    ctx.arc(x, y, r, 0, Math.PI * 2)
+    ctx.fillStyle = g
+    ctx.fill()
+
+    ctx.beginPath()
+    ctx.ellipse(luzX, luzY - r * 0.06, r * 0.28, r * 0.19, -0.6, 0, Math.PI * 2)
+    ctx.fillStyle = 'rgba(255,255,255,0.7)'
+    ctx.fill()
+  }
+
+  function desenhaComidas () {
+    const v = limitesVisiveis(60)
+    for (const c of comidas) {
+      if (c.x < v.x0 || c.x > v.x1 || c.y < v.y0 || c.y > v.y1) continue
+      const pulso = 1 + Math.sin(jogo.tempo * 3 + c.fase) * 0.12
+      const nascendo = clamp((jogo.tempo - c.nascimento) * 4, 0.25, 1)
+      const r = c.raio * pulso * nascendo
+
+      ctx.save()
+      ctx.globalCompositeOperation = 'lighter'
+      const brilhoG = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, r * 3.4)
+      brilhoG.addColorStop(0, `hsla(${c.matiz} 100% 70% / 0.42)`)
+      brilhoG.addColorStop(1, `hsla(${c.matiz} 100% 60% / 0)`)
+      ctx.fillStyle = brilhoG
+      ctx.beginPath()
+      ctx.arc(c.x, c.y, r * 3.4, 0, Math.PI * 2)
+      ctx.fill()
+      ctx.restore()
+
+      ctx.beginPath()
+      ctx.ellipse(c.x + r * 0.3, c.y + r * 0.45, r * 0.95, r * 0.72, 0, 0, Math.PI * 2)
+      ctx.fillStyle = 'rgba(0,0,0,0.34)'
+      ctx.fill()
+
+      esfera(c.x, c.y, r, c.matiz, 0.35)
+    }
+  }
+
+  // monta o caminho do corpo: cabeça na frente, cauda no fim
+  function pontosDoCorpo (c) {
+    const pts = [{ x: c.x, y: c.y }]
+    for (let i = 1; i <= c.segmentos; i++) {
+      const p = pontoDaTrilha(c, i)
+      if (!p) break
+      pts.push(p)
+    }
+    return pts
+  }
+
+  // corpo neon de espessura constante: traçado em pedaços para variar a cor
+  function tracaCorpo (c, pts, largura, dx, dy, luz, alpha, aditivo) {
+    ctx.save()
+    if (aditivo) ctx.globalCompositeOperation = 'lighter'
+    ctx.globalAlpha = alpha
+    ctx.lineWidth = largura
+    ctx.lineCap = 'round'
+    ctx.lineJoin = 'round'
+
+    const passo = 5
+    for (let i = 0; i < pts.length - 1; i += passo) {
+      const fim = Math.min(pts.length - 1, i + passo)
+      ctx.beginPath()
+      ctx.moveTo(pts[i].x + dx, pts[i].y + dy)
+      for (let j = i + 1; j <= fim; j++) ctx.lineTo(pts[j].x + dx, pts[j].y + dy)
+      ctx.strokeStyle = luz === null
+        ? 'rgba(0,0,0,0.32)'
+        : `hsl(${(c.matiz + i * 2.6 + jogo.tempo * 26) % 360} 100% ${luz}%)`
+      ctx.stroke()
+    }
+    ctx.restore()
+  }
+
+  function desenhaCobra (c) {
+    if (!c.viva) return
+    const v = limitesVisiveis(c.raio * 4)
+    const pts = pontosDoCorpo(c)
+    if (pts.length < 2) return
+
+    // fora da tela? não desenha
+    let visivel = false
+    for (const p of pts) {
+      if (p.x > v.x0 && p.x < v.x1 && p.y > v.y0 && p.y < v.y1) { visivel = true; break }
+    }
+    if (!visivel) return
+
+    const r = c.raio
+    const eu = c === jogador
+
+    tracaCorpo(c, pts, r * 2, r * 0.34, r * 0.5, null, 1, false)              // sombra no chão
+    tracaCorpo(c, pts, r * 3.6, 0, 0, 58, c.turbo ? 0.3 : (eu ? 0.2 : 0.14), true) // halo neon
+    tracaCorpo(c, pts, r * 2, 0, 0, 46, 1, false)                             // corpo
+    tracaCorpo(c, pts, r * 1.15, 0, -r * 0.34, 66, 0.85, false)               // luz de cima
+    tracaCorpo(c, pts, r * 0.42, -r * 0.16, -r * 0.56, 92, 0.6, false)        // reflexo
+    tracaCorpo(c, pts, r * 2, 0, 0, 78, 0.28, true)                           // brilho neon geral
+
+    desenhaOlhos(c)
+    if (!eu) desenhaNome(c)
+  }
+
+  // a cobra não tem cabeça: só os olhinhos sobre a ponta do corpo
+  function desenhaOlhos (c) {
+    const r = c.raio
+    const dir = c.angulo
+    for (const lado of [-0.72, 0.72]) {
+      const ox = c.x + Math.cos(dir + lado) * r * 0.5
+      const oy = c.y + Math.sin(dir + lado) * r * 0.5
+      const ro = r * 0.36
+
+      const g = ctx.createRadialGradient(ox - ro * 0.3, oy - ro * 0.35, ro * 0.1, ox, oy, ro)
+      g.addColorStop(0, '#ffffff')
+      g.addColorStop(0.75, '#eef5ff')
+      g.addColorStop(1, '#9fb4d0')
+      ctx.beginPath()
+      ctx.arc(ox, oy, ro, 0, Math.PI * 2)
+      ctx.fillStyle = g
+      ctx.fill()
+
+      const px = ox + Math.cos(dir) * ro * 0.44
+      const py = oy + Math.sin(dir) * ro * 0.44
+      ctx.beginPath()
+      ctx.arc(px, py, ro * 0.46, 0, Math.PI * 2)
+      ctx.fillStyle = '#0b1023'
+      ctx.fill()
+
+      ctx.beginPath()
+      ctx.arc(px - ro * 0.16, py - ro * 0.18, ro * 0.16, 0, Math.PI * 2)
+      ctx.fillStyle = 'rgba(255,255,255,0.92)'
+      ctx.fill()
+    }
+  }
+
+  function desenhaNome (c) {
+    ctx.save()
+    ctx.font = '600 14px system-ui, sans-serif'
+    ctx.textAlign = 'center'
+    ctx.fillStyle = 'rgba(255,255,255,0.72)'
+    ctx.shadowColor = 'rgba(0,0,0,0.8)'
+    ctx.shadowBlur = 6
+    ctx.fillText(c.nome, c.x, c.y - c.raio - 14)
+    ctx.restore()
+  }
+
+  function desenhaParticulas () {
+    ctx.save()
+    ctx.globalCompositeOperation = 'lighter'
+    for (const p of particulas) {
+      ctx.beginPath()
+      ctx.arc(p.x, p.y, p.raio * p.vida, 0, Math.PI * 2)
+      ctx.fillStyle = `hsla(${p.matiz} 100% 68% / ${clamp(p.vida, 0, 1)})`
+      ctx.fill()
+    }
+    ctx.restore()
+  }
+
+  function desenhaMinimapa () {
+    const tamanho = Math.min(150, larguraTela * 0.28)
+    const x = larguraTela - tamanho - 18
+    const y = alturaTela - tamanho - 18
+    const escala = tamanho / MUNDO.largura
+
+    ctx.save()
+    ctx.globalAlpha = 0.85
+    ctx.fillStyle = 'rgba(8, 12, 32, 0.6)'
+    ctx.strokeStyle = 'rgba(140, 200, 255, 0.25)'
+    ctx.lineWidth = 1
+    ctx.beginPath()
+    ctx.roundRect(x, y, tamanho, tamanho, 10)
+    ctx.fill()
+    ctx.stroke()
+
+    for (const c of cobras) {
+      if (!c.viva) continue
+      const eu = c === jogador
+      ctx.beginPath()
+      ctx.arc(x + c.x * escala, y + c.y * escala, eu ? 4 : 2.6, 0, Math.PI * 2)
+      ctx.fillStyle = eu ? '#ffffff' : `hsl(${c.matiz} 100% 62%)`
+      ctx.fill()
+    }
+    ctx.restore()
+  }
+
+  function desenhar () {
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+    ctx.clearRect(0, 0, larguraTela, alturaTela)
+
+    const fundo = ctx.createRadialGradient(
+      larguraTela * 0.5, alturaTela * 0.35, 0,
+      larguraTela * 0.5, alturaTela * 0.5, Math.max(larguraTela, alturaTela) * 0.8
+    )
+    fundo.addColorStop(0, '#191049')
+    fundo.addColorStop(0.55, '#0a0c27')
+    fundo.addColorStop(1, '#04050f')
+    ctx.fillStyle = fundo
+    ctx.fillRect(0, 0, larguraTela, alturaTela)
+
+    ctx.save()
+    const tx = jogo.tremor > 0.2 ? aleatorio(-jogo.tremor, jogo.tremor) : 0
+    const ty = jogo.tremor > 0.2 ? aleatorio(-jogo.tremor, jogo.tremor) : 0
+    ctx.translate(larguraTela / 2 + tx, alturaTela / 2 + ty)
+    ctx.scale(camera.zoom, camera.zoom)
+    ctx.translate(-camera.x, -camera.y)
+
+    desenhaChao()
+    desenhaComidas()
+    for (const c of cobras) if (c !== jogador) desenhaCobra(c)
+    if (jogador) desenhaCobra(jogador)
+    desenhaParticulas()
+
+    ctx.restore()
+
+    const v = ctx.createRadialGradient(
+      larguraTela / 2, alturaTela / 2, Math.min(larguraTela, alturaTela) * 0.35,
+      larguraTela / 2, alturaTela / 2, Math.max(larguraTela, alturaTela) * 0.75
+    )
+    v.addColorStop(0, 'rgba(0,0,0,0)')
+    v.addColorStop(1, 'rgba(0,0,0,0.55)')
+    ctx.fillStyle = v
+    ctx.fillRect(0, 0, larguraTela, alturaTela)
+
+    desenhaMinimapa()
+
+    if (jogo.rodando && entrada.usandoMouse) {
+      ctx.beginPath()
+      ctx.arc(entrada.mouseX, entrada.mouseY, 7, 0, Math.PI * 2)
+      ctx.strokeStyle = 'rgba(255,255,255,0.55)'
+      ctx.lineWidth = 2
+      ctx.stroke()
+    }
+  }
+
+  // ------------------------------------------------------------------- loop
+  let anterior = performance.now()
+  function quadro (agora) {
+    const dt = Math.min(0.05, (agora - anterior) / 1000)
+    anterior = agora
+    atualizar(dt)
+    desenhar()
+    requestAnimationFrame(quadro)
+  }
+
+  document.getElementById('botao-jogar').addEventListener('click', comecar)
+  document.getElementById('botao-reiniciar').addEventListener('click', comecar)
+  document.getElementById('botao-casa').addEventListener('click', voltarParaCasa)
+
+  preparaMundo()
+  el.recorde.textContent = jogo.recorde
+  requestAnimationFrame(quadro)
+})()
+</script>
+</body>
+</html>
